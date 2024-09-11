@@ -29,6 +29,7 @@ import { CalendarDays, MapPin, Clock, Search } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { events, Event } from "@/data/events";
 
 // Fix for default marker icon in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -40,40 +41,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png",
 });
-
-interface Event {
-  id: number;
-  name: string;
-  start: string;
-  end: string;
-  blurb: string;
-  host: string;
-  image: string;
-  location: string;
-  type: string;
-  registration: string;
-  link: string;
-  mapLink: string;
-}
-
-const events: Event[] = [
-  {
-    id: 1,
-    name: "Sustainable Storytelling: On and Off Camera",
-    start: "9/27/2024 17:00",
-    end: "9/27/2024 19:00",
-    blurb: "Join us for the latest in tech innovations",
-    host: "The Climate Imaginarium",
-    image:
-      "https://v5.airtableusercontent.com/v3/u/33/33/1726092000000/eGY7e4y-XQ33k7oLPQW-jQ/Eh18sr5NdnCbhPYkrSKdTi3YJUw1kfxPL0mI27qSiIL1UbYejV1NUISuaUwKAcjNMSEcEG0KFXrVXAIlnPBt2iTLpHZAmXDXIisojVVBdKOV5DrYQohDX3-JHPVdN1WtULzJ1aa8lfwsTeQxdAclHF8AL5vY4LlB8L0DWj6JNFCr2qnCURi0sewIYzzXaUQl/6Hw9ulJn480NFIQbxMjiAR8XDAnlr-PE3vsol2pWWg8",
-    location: "Convention Center, New York",
-    type: "Film Screening, Panel Discussion, Keynote or Fireside Chat",
-    registration: "",
-    link: "https://example.com/tech-conf",
-    mapLink:
-      "https://www.google.com/maps/place/The+Climate+Imaginarium/@40.6900272,-74.0174897,17z/data=!3m1!4b1!4m6!3m5!1s0x89c25b0012954859:0xb063a7dbfd161e06!8m2!3d40.6900272!4d-74.0174897!16s%2Fg%2F11v_2hdcf8?entry=ttu&g_ep=EgoyMDI0MDkwOS4wIKXMDSoASAFQAw%3D%3D",
-  },
-];
 
 function extractCoordinates(mapLink: string): [number, number] | null {
   const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
@@ -116,7 +83,7 @@ function MapMarkers({ selectedEvent, onMarkerClick }: MapMarkersProps) {
             >
               <Popup>
                 <div>
-                  <h3 className="font-bold">{event.name}</h3>
+                  <h3 className="font-bold">{event.eventName}</h3>
                   <p>
                     {formatDate(event.start)} | {formatTime(event.start)} -{" "}
                     {formatTime(event.end)}
@@ -163,8 +130,10 @@ export default function EventDisplay() {
     return events
       .filter(
         (event) =>
-          event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.location.toLowerCase().includes(searchTerm.toLowerCase())
+          (event &&
+            event.eventName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (event &&
+            event.location.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       .sort((a, b) => {
         if (sortOption === "dateAsc") {
@@ -238,9 +207,9 @@ export default function EventDisplay() {
               onClick={() => handleEventClick(event)}
             >
               <CardHeader>
-                <CardTitle>{event.name}</CardTitle>
+                <CardTitle>{event.eventName}</CardTitle>
                 <CardDescription>
-                  {event.type.split(",").map((type, index) => (
+                  {event.eventType.split(",").map((type, index) => (
                     <Badge key={index} className="mr-2 mt-2">
                       {type.trim()}
                     </Badge>
@@ -305,13 +274,13 @@ export default function EventDisplay() {
           {selectedEvent && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedEvent.name}</DialogTitle>
+                <DialogTitle>{selectedEvent.eventName}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <img
                     src={selectedEvent.image}
-                    alt={selectedEvent.name}
+                    alt={selectedEvent.eventName}
                     className="w-1/2 h-auto rounded-lg"
                   />
                 </div>
@@ -321,7 +290,7 @@ export default function EventDisplay() {
                       Hosted by {selectedEvent.host}
                     </p>
                   )}
-                  <p className="mb-4">{selectedEvent.blurb}</p>
+                  <p className="mb-4">{selectedEvent.eventBlurb}</p>
                   <div className="flex items-center mb-2">
                     <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
                     <span>{formatDate(selectedEvent.start)}</span>
@@ -337,19 +306,21 @@ export default function EventDisplay() {
                     <MapPin className="mr-2 h-4 w-4 opacity-70" />
                     <span>{selectedEvent.location}</span>
                   </div>
-                  {selectedEvent.registration && (
+                  {selectedEvent.registrationType && (
                     <p className="mb-2">
-                      Registration: {selectedEvent.registration}
+                      Registration: {selectedEvent.registrationType}
                     </p>
                   )}
-                  <a
-                    href={selectedEvent.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    Event Link
-                  </a>
+                  {selectedEvent.registrationLink && (
+                    <a
+                      href={selectedEvent.registrationLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Event Link
+                    </a>
+                  )}
                 </div>
               </div>
             </>

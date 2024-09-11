@@ -259,8 +259,7 @@ export default function EventDisplay() {
             ref={mapRef}
           >
             <TileLayer
-              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"  
             />
             <MapMarkers
               selectedEvent={selectedEvent}

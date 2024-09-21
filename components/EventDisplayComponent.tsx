@@ -81,6 +81,7 @@ function MapMarkers({ selectedEvent, onMarkerClick }: MapMarkersProps) {
         if (coordinates) {
           return (
             <Marker
+            
               key={event.id}
               position={coordinates}
               ref={(ref) => {
@@ -222,7 +223,7 @@ export default function EventDisplay() {
                 {event.eventType && (
                   <CardDescription>
                     {event.eventType.split(",").map((type, index) => (
-                      <Badge key={index} className="mr-2 mt-2">
+                      <Badge key={index} className="mr-2 mt-2 bg-[#808FFF]">
                         {type.trim()}
                       </Badge>
                     ))}

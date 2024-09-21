@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -58,25 +59,35 @@ interface MapMarkersProps {
 
 function MapMarkers({ selectedEvent, onMarkerClick }: MapMarkersProps) {
   const map = useMap();
+  const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
 
   useEffect(() => {
     if (selectedEvent) {
       const coordinates = extractCoordinates(selectedEvent.mapLink);
       if (coordinates) {
-        map.setView(coordinates, 10);
+        map.setView(coordinates, 14);
+        const marker = markerRefs.current[selectedEvent.id];
+        if (marker) {
+          marker.openPopup();
+        }
       }
     }
   }, [selectedEvent, map]);
 
   return (
     <>
-      {events.map((event) => {
+      {events.map((event: Event) => {
         const coordinates = extractCoordinates(event.mapLink);
         if (coordinates) {
           return (
             <Marker
               key={event.id}
               position={coordinates}
+              ref={(ref) => {
+                if (ref) {
+                  markerRefs.current[event.id] = ref;
+                }
+              }}
               eventHandlers={{
                 click: () => onMarkerClick(event),
               }}
@@ -149,7 +160,7 @@ export default function EventDisplay() {
     if (mapRef.current) {
       const coordinates = extractCoordinates(event.mapLink);
       if (coordinates) {
-        mapRef.current.setView(coordinates, 10);
+        mapRef.current.setView(coordinates, 14);
       }
     }
   };
@@ -208,13 +219,15 @@ export default function EventDisplay() {
             >
               <CardHeader>
                 <CardTitle>{event.eventName}</CardTitle>
-                <CardDescription>
-                  {event.eventType.split(",").map((type, index) => (
-                    <Badge key={index} className="mr-2 mt-2">
-                      {type.trim()}
-                    </Badge>
-                  ))}
-                </CardDescription>
+                {event.eventType && (
+                  <CardDescription>
+                    {event.eventType.split(",").map((type, index) => (
+                      <Badge key={index} className="mr-2 mt-2">
+                        {type.trim()}
+                      </Badge>
+                    ))}
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="flex items-center mb-2">
@@ -251,16 +264,14 @@ export default function EventDisplay() {
         </div>
         <div className="w-full lg:w-1/2 h-[600px] z-0">
           <MapContainer
-            center={[39.8283, -98.5795]}
-            zoom={4}
+            center={[40.7128, -74.006]}
+            zoom={12}
             minZoom={3}
             maxZoom={19}
             style={{ height: "100%", width: "100%" }}
             ref={mapRef}
           >
-            <TileLayer
-              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"  
-            />
+            <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png" />
             <MapMarkers
               selectedEvent={selectedEvent}
               onMarkerClick={handleMarkerClick}
@@ -276,13 +287,15 @@ export default function EventDisplay() {
                 <DialogTitle>{selectedEvent.eventName}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <img
-                    src={selectedEvent.image}
-                    alt={selectedEvent.eventName}
-                    className="w-1/2 h-auto rounded-lg"
-                  />
-                </div>
+                {selectedEvent.image && (
+                  <div>
+                    <img
+                      src={selectedEvent.image}
+                      alt={selectedEvent.eventName}
+                      className="w-1/2 h-auto rounded-lg"
+                    />
+                  </div>
+                )}
                 <div>
                   {selectedEvent.host && (
                     <p className="text-sm text-gray-500 mb-2">
@@ -305,19 +318,21 @@ export default function EventDisplay() {
                     <MapPin className="mr-2 h-4 w-4 opacity-70" />
                     <span>{selectedEvent.location}</span>
                   </div>
-                  {selectedEvent.registrationType && (
-                    <p className="mb-2">
-                      Registration: {selectedEvent.registrationType}
-                    </p>
-                  )}
-                  {selectedEvent.registrationLink && (
+                  {selectedEvent.infoLink && (
                     <a
-                      href={selectedEvent.registrationLink}
+                      href={selectedEvent.infoLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
+                      className="flex items-center gap-2 hover:underline hover:underline-offset-4"
                     >
-                      Event Link
+                      More info
+                      <Image
+                        aria-hidden
+                        src="./link.svg"
+                        alt="Window icon"
+                        width={16}
+                        height={16}
+                      />
                     </a>
                   )}
                 </div>

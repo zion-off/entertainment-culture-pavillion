@@ -228,19 +228,19 @@ export default function EventDisplay() {
             {filteredAndSortedEvents.map((event) => (
               <Card
                 key={event.id}
-                className={`w-full flex cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
+                className={`w-full flex flex-col lg:flex-row cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
                   selectedEvent && selectedEvent.id === event.id
                     ? "ring-2 ring-[#808FFF]"
                     : ""
                 }`}
                 onClick={() => handleEventClick(event)}
               >
-                <div className="w-[200px] max-h-full">
+                <div className="h-[100px] lg:h-auto lg:w-[200px] relative">
                   {event.image && (
                     <img
                       src={event.image}
                       alt={event.eventName}
-                      className="w-full h-full object-cover rounded-l-xl"
+                      className="w-full h-full object-cover rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none absolute inset-0"
                     />
                   )}
                 </div>

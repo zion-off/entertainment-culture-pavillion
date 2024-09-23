@@ -89,4 +89,9 @@ body {
     font-family: 'Archivo';
     src: url('/fonts/Archivo-Regular.ttf') format('truetype');
   }
+
+  @font-face {
+    font-family: 'Degular';
+    src: url('/fonts/Degular-Regular.ttf') format('opentype');
+  }
 }

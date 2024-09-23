@@ -58,6 +58,7 @@ const config: Config = {
       },
       fontFamily: {
         "archivo-regular": ["Archivo", "sans-serif"],
+        "degular-regular": ["Degular", "serif"],
       },
     },
   },

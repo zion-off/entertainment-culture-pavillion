@@ -24,13 +24,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { CalendarDays, MapPin, Clock, Search } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { events, Event } from "@/data/events";
+import { returnEvents, Event } from "@/data/events";
 
 // Fix for default marker icon in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -53,11 +52,12 @@ function extractCoordinates(mapLink: string): [number, number] | null {
 }
 
 interface MapMarkersProps {
+  events: Event[];
   selectedEvent: Event | null;
   onMarkerClick: (event: Event) => void;
 }
 
-function MapMarkers({ selectedEvent, onMarkerClick }: MapMarkersProps) {
+function MapMarkers({ selectedEvent, onMarkerClick, events }: MapMarkersProps) {
   const map = useMap();
   const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
 
@@ -81,7 +81,6 @@ function MapMarkers({ selectedEvent, onMarkerClick }: MapMarkersProps) {
         if (coordinates) {
           return (
             <Marker
-            
               key={event.id}
               position={coordinates}
               ref={(ref) => {
@@ -96,10 +95,12 @@ function MapMarkers({ selectedEvent, onMarkerClick }: MapMarkersProps) {
               <Popup>
                 <div>
                   <h3 className="font-bold">{event.eventName}</h3>
-                  <p>
-                    {formatDate(event.start)} | {formatTime(event.start)} -{" "}
-                    {formatTime(event.end)}
-                  </p>
+                  {event.start && event.end && (
+                    <p>
+                      {formatDate(event.start)} | {formatTime(event.start)} -{" "}
+                      {formatTime(event.end)}
+                    </p>
+                  )}
                   <p>{event.host}</p>
                 </div>
               </Popup>
@@ -137,16 +138,30 @@ export default function EventDisplay() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const eventsData = await returnEvents();
+        setEvents(eventsData);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const filteredAndSortedEvents = useMemo(() => {
     return events
-      .filter(
-        (event) =>
-          (event &&
-            event.eventName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (event &&
-            event.location.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+      .filter((event) => {
+        if (!searchTerm) return true;
+        return (
+          event.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.location.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      })
       .sort((a, b) => {
         if (sortOption === "dateAsc") {
           return new Date(a.start).getTime() - new Date(b.start).getTime();
@@ -154,7 +169,7 @@ export default function EventDisplay() {
           return new Date(b.start).getTime() - new Date(a.start).getTime();
         }
       });
-  }, [searchTerm, sortOption]);
+  }, [searchTerm, sortOption, events]);
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
@@ -176,7 +191,7 @@ export default function EventDisplay() {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 h-screen">
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-grow">
           <Input
@@ -206,64 +221,79 @@ export default function EventDisplay() {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-1/2 space-y-4 overflow-y-auto max-h-[600px] p-5">
-          {filteredAndSortedEvents.map((event) => (
-            <Card
-              key={event.id}
-              className={`flex flex-col cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
-                selectedEvent && selectedEvent.id === event.id
-                  ? "ring-2 ring-primary"
-                  : ""
-              }`}
-              onClick={() => handleEventClick(event)}
-            >
-              <CardHeader>
-                <CardTitle>{event.eventName}</CardTitle>
-                {event.eventType && (
-                  <CardDescription>
-                    {event.eventType.split(",").map((type, index) => (
-                      <Badge key={index} className="mr-2 mt-2 bg-[#808FFF]">
-                        {type.trim()}
-                      </Badge>
-                    ))}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="flex items-center mb-2">
-                  <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
-                  <span>{formatDate(event.start)}</span>
-                </div>
-                <div className="flex items-center mb-2">
-                  <Clock className="mr-2 h-4 w-4 opacity-70" />
-                  <span>
-                    {formatTime(event.start)} - {formatTime(event.end)}
-                  </span>
-                </div>
-                <div className="flex items-center mb-4">
-                  <MapPin className="mr-2 h-4 w-4 opacity-70" />
-                  <span>{event.location}</span>
-                </div>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openModal(event);
-                  }}
-                  variant="link"
-                >
-                  See details
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-          {filteredAndSortedEvents.length === 0 && (
-            <p className="text-center text-gray-500 mt-6">
-              No events found matching your search.
-            </p>
-          )}
-        </div>
-        <div className="w-full lg:w-1/2 h-[600px] z-0">
+      <div className="flex flex-col lg:flex-row gap-6 h-[90%]">
+        {events.length === 0 ? (
+          <div className="w-full h-full lg:w-1/2 space-y-4 overflow-y-auto p-5 bg-gray-100 animate-pulse rounded-lg"></div>
+        ) : (
+          <div className="w-full lg:w-1/2 space-y-4 overflow-y-auto p-5 h-full">
+            {filteredAndSortedEvents.map((event) => (
+              <Card
+                key={event.id}
+                className={`flex flex-col cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
+                  selectedEvent && selectedEvent.id === event.id
+                    ? "ring-2 ring-[#808FFF]"
+                    : ""
+                }`}
+                onClick={() => handleEventClick(event)}
+              >
+                <CardHeader>
+                  <CardTitle>{event.eventName}</CardTitle>
+                  {event.eventType && (
+                    <CardDescription>
+                      {event.eventType.map((type: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-[#808FFF] text-primary-foreground shadow hover:bg-[#808FFF]/80 mr-2 mt-2 "
+                        >
+                          {type.trim()}
+                        </span>
+                      ))}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  {event.start && event.end && (
+                    <>
+                      <div className="flex items-center mb-2">
+                        <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
+                        <span>{formatDate(event.start)}</span>
+                      </div>
+                      <div className="flex items-center mb-2">
+                        <Clock className="mr-2 h-4 w-4 opacity-70" />
+                        <span>
+                          {formatTime(event.start)} - {formatTime(event.end)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {event.location && (
+                    <div className="flex items-center mb-4">
+                      <MapPin className="mr-2 h-4 w-4 min-w-4 opacity-70" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openModal(event);
+                    }}
+                    variant="link"
+                  >
+                    See details
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+            {filteredAndSortedEvents.length === 0 && (
+              <p className="text-center text-gray-500 mt-6">
+                No events found matching your search.
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="w-full lg:w-1/2 h-full z-0">
           <MapContainer
             center={[40.7128, -74.006]}
             zoom={12}
@@ -272,8 +302,9 @@ export default function EventDisplay() {
             style={{ height: "100%", width: "100%" }}
             ref={mapRef}
           >
-            <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png" />
+            <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png" />
             <MapMarkers
+              events={events}
               selectedEvent={selectedEvent}
               onMarkerClick={handleMarkerClick}
             />
@@ -315,10 +346,13 @@ export default function EventDisplay() {
                       {formatTime(selectedEvent.end)}
                     </span>
                   </div>
-                  <div className="flex items-center mb-4">
-                    <MapPin className="mr-2 h-4 w-4 opacity-70" />
-                    <span>{selectedEvent.location}</span>
-                  </div>
+                  {selectedEvent.location && (
+                    <div className="flex items-center mb-4">
+                      <MapPin className="mr-2 h-4 w-4 opacity-70" />
+                      <span className="w-1/2">{selectedEvent.location}</span>
+                    </div>
+                  )}
+
                   {selectedEvent.infoLink && (
                     <a
                       href={selectedEvent.infoLink}

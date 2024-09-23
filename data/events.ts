@@ -22,7 +22,7 @@ export async function returnEvents(): Promise<Event[]> {
         "",
       location: record.fields["Event Location"] || "",
       eventType: record.fields["Event Type"] || [],
-      infoLink: record.fields["For more info"] || "",
+      infoLink: record.fields["For more info:"] || "",
       mapLink: record.fields["Google Map Link"] || "",
     };
   });

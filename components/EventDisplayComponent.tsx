@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -229,60 +228,78 @@ export default function EventDisplay() {
             {filteredAndSortedEvents.map((event) => (
               <Card
                 key={event.id}
-                className={`flex flex-col cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
+                className={`w-full flex cursor-pointer hover:shadow-lg transition-shadow duration-200 ${
                   selectedEvent && selectedEvent.id === event.id
                     ? "ring-2 ring-[#808FFF]"
                     : ""
                 }`}
                 onClick={() => handleEventClick(event)}
               >
-                <CardHeader>
-                  <CardTitle>{event.eventName}</CardTitle>
-                  {event.eventType && (
-                    <CardDescription>
-                      {event.eventType.map((type: string, index: number) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-[#808FFF] text-primary-foreground shadow hover:bg-[#808FFF]/80 mr-2 mt-2 "
-                        >
-                          {type.trim()}
-                        </span>
-                      ))}
-                    </CardDescription>
+                <div className="w-[200px] max-h-full">
+                  {event.image && (
+                    <img
+                      src={event.image}
+                      alt={event.eventName}
+                      className="w-full h-full object-cover rounded-l-xl"
+                    />
                   )}
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  {event.start && event.end && (
-                    <>
-                      <div className="flex items-center mb-2">
-                        <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
-                        <span>{formatDate(event.start)}</span>
-                      </div>
-                      <div className="flex items-center mb-2">
-                        <Clock className="mr-2 h-4 w-4 opacity-70" />
-                        <span>
-                          {formatTime(event.start)} - {formatTime(event.end)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {event.location && (
-                    <div className="flex items-center mb-4">
-                      <MapPin className="mr-2 h-4 w-4 min-w-4 opacity-70" />
-                      <span className="truncate">{event.location}</span>
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <CardHeader className="flex-shrink-0">
+                    <CardTitle className="font-degular-regular text-lg truncate">
+                      {event.eventName}
+                    </CardTitle>
+                    {event.eventType && (
+                      <CardDescription className="flex flex-wrap gap-2 mt-2">
+                        {event.eventType.map((type: string, index: number) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-[#808FFF] text-primary-foreground shadow hover:bg-[#808FFF]/80"
+                          >
+                            {type.trim()}
+                          </span>
+                        ))}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col justify-between">
+                    <div className="space-y-2">
+                      {event.start && event.end && (
+                        <>
+                          <div className="flex items-center">
+                            <CalendarDays className="mr-2 h-4 w-4 flex-shrink-0 opacity-70" />
+                            <span className="truncate">
+                              {formatDate(event.start)}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <Clock className="mr-2 h-4 w-4 flex-shrink-0 opacity-70" />
+                            <span className="truncate">
+                              {formatTime(event.start)} -{" "}
+                              {formatTime(event.end)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      {event.location && (
+                        <div className="flex items-center">
+                          <MapPin className="mr-2 h-4 w-4 flex-shrink-0 opacity-70" />
+                          <span className="truncate">{event.location}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openModal(event);
-                    }}
-                    variant="link"
-                  >
-                    See details
-                  </Button>
-                </CardContent>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openModal(event);
+                      }}
+                      variant="link"
+                      className="self-start mt-4"
+                    >
+                      See details
+                    </Button>
+                  </CardContent>
+                </div>
               </Card>
             ))}
             {filteredAndSortedEvents.length === 0 && (
@@ -298,7 +315,7 @@ export default function EventDisplay() {
             center={[40.7128, -74.006]}
             zoom={12}
             minZoom={3}
-            maxZoom={19}
+            maxZoom={17}
             style={{ height: "100%", width: "100%" }}
             ref={mapRef}
           >
@@ -316,7 +333,9 @@ export default function EventDisplay() {
           {selectedEvent && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedEvent.eventName}</DialogTitle>
+                <DialogTitle className="font-degular-regular text-3xl">
+                  {selectedEvent.eventName}
+                </DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-1 gap-4">
                 {selectedEvent.image && (

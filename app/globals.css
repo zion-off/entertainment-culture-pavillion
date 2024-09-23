@@ -92,6 +92,6 @@ body {
 
   @font-face {
     font-family: 'Degular';
-    src: url('/fonts/Degular-Regular.ttf') format('opentype');
+    src: url('/fonts/Degular-Regular.otf') format('opentype');
   }
 }

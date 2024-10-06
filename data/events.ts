@@ -1,12 +1,5 @@
 export async function returnEvents(): Promise<Event[]> {
-  const response = await fetch(
-    "https://api.airtable.com/v0/app8RUorIqgxDMlsk/tblt2MNLZLWR1b2fN",
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_AIRTABLE_API_KEY}`,
-      },
-    }
-  );
+  const response = await fetch('/api/airtable');
   const data = await response.json();
   const events = data.records.map((record: any) => {
     return {
